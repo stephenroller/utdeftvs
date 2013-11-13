@@ -1,21 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 import sys
-import argparse
 import logging
+import gc
 from collections import Counter, defaultdict
-from contentwords import is_content_word
 
 logging.basicConfig(level=logging.DEBUG)
-
-# MEM_LIMIT = 1024
-# import psutil
-# from os import getpid
-# import gc
-
-# def mem_usage():
-#     p = psutil.Process(getpid())
-#     # return in MB
-#     return p.get_memory_info()[0]/1048576.
 
 def read_corpus(corpus):
     for line in corpus:
@@ -27,7 +16,7 @@ def load_contexts(file):
 def make_bow_vectorspace(corpus, contexts):
     logging.info("Size of contexts: %d" % len(contexts))
     space = defaultdict(Counter)
-    for sno, sentence in enumerate(read_corpus(corpus)):
+    for sno, sentence in enumerate(read_corpus(corpus), 1):
         sentence_contexts = [(i, w) for i, w in enumerate(sentence) if w in contexts]
         indices = set(i for i, w in sentence_contexts)
         sentence_contexts = Counter(w for i, w in sentence_contexts)
@@ -37,19 +26,16 @@ def make_bow_vectorspace(corpus, contexts):
                 # uh oh, we counted a word as cooc'ing with itself. gotta undo that
                 space[target].subtract([target])
 
-#         if sno % 10000 == 0:
-#             # check memory and stuff
-#             if mem_usage() > MEM_LIMIT:
-#                 for target, values in space.iteritems():
-#                     for context, count in values.iteritems():
-#                         yield target, context, count
-#                 # time to flush the memory
-#                 logging.info("Flushing memory...")
-#                 space = defaultdict(Counter)
-#                 gc.collect()
-# 
-#             logging.info("Processed line %.1fm, mem usage: %.2f MB" % (sno/1e6, mem_usage()))
-# 
+        if sno % 50000 == 0:
+            # flush out the memory
+            for target, values in space.iteritems():
+                for context, count in values.iteritems():
+                    yield target, context, count
+            space = defaultdict(Counter)
+            gc.collect()
+
+            logging.info("Processed line %.2fm (memory flushed)" % (sno/1e6))
+
 
     for target, values in space.iteritems():
         for context, count in values.iteritems():
