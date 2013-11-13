@@ -21,15 +21,6 @@ def read_corpus(corpus):
     for line in corpus:
         yield line.rstrip().split(" ")
 
-def find_contexts(corpus, max_num_contexts):
-    content_counts = Counter()
-    for sno, sentence in enumerate(read_corpus(corpus)):
-        content_counts.update(filter(is_content_word, sentence))
-        if sno % 100000 == 0:
-            logging.info("Processed line %.1fm, mem usage: %.2f MB" % (sno/1e6, mem_usage()))
-    content_words = set(k for k, v in content_counts.most_common(max_num_contexts))
-    return content_words
-
 def load_contexts(file):
     return set(w.strip() for w in file if w.strip())
 
@@ -65,23 +56,13 @@ def make_bow_vectorspace(corpus, contexts):
             yield target, context, count
 
 
-def main_wc():
-    logging.info("Starting...")
-    contexts = find_contexts(sys.stdin, 10000)
-    logging.info("Found contexts (%.1fk)." % (len(contexts)/1e3))
-    for c in contexts:
-        print c
-
-def main_vs():
+def main():
     # now let's actually make the space
     contexts = load_contexts(open('contexts.txt'))
     for target, context, count in make_bow_vectorspace(sys.stdin, contexts):
         print "%s\t%s\t%d" % (target, context, count)
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1 and sys.argv[1] == 'wc':
-        main_wc()
-    else:
-        main_vs()
+    main()
 
 
