@@ -22,13 +22,14 @@ def is_content_word(word_pos):
 def main():
     parser = argparse.ArgumentParser(
                 description='Filters non-content words from a given vs corpus.')
-    parser.add_argument('--input', '-i', metavar='[FILE|-]', help='Input file')
+    parser.add_argument('--input', '-i', metavar='[FILE|-]', type=argparse.FileType('r'), help='Input file', default=sys.stdin)
     args = parser.parse_args()
-    inpt = open(args.input)
+    inpt = args.input
 
-    inpt.seek(0)
     for sentence in inpt:
-        sentence = [is_content_word(wp) for wp in sentence.strip().split(" ")]
+        sentence = sentence.strip().split(" ")
+        sentence = (is_content_word(wp) for wp in sentence)
+        sentence = [w for w in sentence if w]
         if len(sentence) >= 2:
             print " ".join(sentence)
 
