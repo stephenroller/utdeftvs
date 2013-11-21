@@ -9,6 +9,8 @@ from util import pos, bigram
 
 logging.basicConfig(level=logging.DEBUG)
 
+FLUSH_FREQUENCY = 50000
+
 def read_corpus(corpus):
     for line in corpus:
         yield line.rstrip().split(" ")
@@ -29,7 +31,7 @@ def make_bow_vectorspace(corpus, contexts):
                 # uh oh, we counted a word as cooc'ing with itself. gotta undo that
                 space[target].subtract([target])
 
-        if sno % 50000 == 0:
+        if sno % FLUSH_FREQUENCY == 0:
             # flush out the memory
             for target, values in space.iteritems():
                 for context, count in values.iteritems():
@@ -60,7 +62,7 @@ def make_adjnoun_bow_vectorspace(corpus, contexts):
                 if t+1 in indices:
                     space[(left, right)].subtract([right])
 
-            if sno % 50000 == 0:
+            if sno % FLUSH_FREQUENCY == 0:
                 for (left, right), values in space.iteritems():
                     for context, count in values.iteritems():
                         if count > 0:
