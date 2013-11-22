@@ -5,9 +5,13 @@ def pos(word):
     dash = word.rindex("-")
     return word[dash+1:]
 
+def ngrams(sentence, n):
+    assert isinstance(n, int) and n > 0
+    for i in xrange(len(sentence) + 1 - n):
+        yield i, tuple(sentence[i:i+n])
+
 def bigrams(sentence):
-    for i in xrange(len(sentence) - 1):
-        yield i, sentence[i], sentence[i + 1]
+    return ngrams(sentence, 2)
 
 
 
