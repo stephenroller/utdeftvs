@@ -6,7 +6,7 @@ import gc
 from collections import Counter, defaultdict
 from functools import partial
 
-from util import pos, bigrams
+from util import pos, ngrams
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -49,32 +49,34 @@ def make_bow_vectorspace(corpus, contexts):
             if count > 0:
                 yield target, context, count
 
-def make_bigram_bow_vectorspace(corpus, contexts, leftpos="a", rightpos="n"):
+def make_ngram_bow_vectorspace(corpus, contexts, n=2, pospattern="an"):
+    pospattern = tuple(pospattern)
+    assert len(pospattern) == n, "POS pattern must be the same size as the ngram size"
+
     space = defaultdict(Counter)
     for sno, sentence in enumerate(read_corpus(corpus), 1):
         sentence_contexts = [(i, w) for i, w in enumerate(sentence) if w in contexts]
         indices = set(i for i, w in sentence_contexts)
         sentence_contexts = Counter(w for i, w in sentence_contexts)
-        for t, left, right in bigrams(sentence):
-            if pos(left) == leftpos and pos(right) == rightpos:
-                space[(left, right)].update(sentence_contexts)
-                if t in indices:
-                    space[(left, right)].subtract([left])
-                if t+1 in indices:
-                    space[(left, right)].subtract([right])
+        for t, ngram in ngrams(sentence, n):
+            if tuple(map(pos, ngram)) == pospattern:
+                space[ngram].update(sentence_contexts)
+                for i in xrange(n):
+                    if t + i in indices:
+                        space[ngram].subtract(ngram[i])
 
             if sno % FLUSH_FREQUENCY == 0:
-                for (left, right), values in space.iteritems():
+                for ngram, values in space.iteritems():
                     for context, count in values.iteritems():
                         if count > 0:
-                            yield "%s__%s" % (left, right), context, count
+                            yield "__".join(ngram), context, count
                 space = defaultdict(Counter)
                 gc.collect()
 
-    for (left, right), values in space.iteritems():
+    for ngram, values in space.iteritems():
         for context, count in values.iteritems():
             if count > 0:
-                yield "%s__%s" % (left, right), context, count
+                yield "__".join(ngram), context, count
 
 def main():
     parser = argparse.ArgumentParser(
@@ -88,9 +90,9 @@ def main():
     # now let's actually make the space
     contexts = load_contexts(args.contexts)
     if args.adjnoun:
-        bow_f = partial(make_bigram_bow_vectorspace, leftpos="a", rightpos="n")
+        bow_f = partial(make_ngram_bow_vectorspace, pospattern="an", n=2)
     elif args.nounnoun:
-        bow_f = partial(make_bigram_bow_vectorspace, leftpos="n", rightpos="n")
+        bow_f = partial(make_ngram_bow_vectorspace, pospattern="nn", n=2)
     else:
         bow_f = make_bow_vectorspace
 

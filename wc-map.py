@@ -17,11 +17,11 @@ def main():
         line = line.strip().split(" ")
         if args.adjnoun:
             # adjnoun bigram count
-            adjnouns = ("%s__%s" % (l, r) for i, l, r in bigrams(line) if pos(l) == "a" and pos(r) == "n")
+            adjnouns = ("%s__%s" % (l, r) for i, (l, r) in bigrams(line) if pos(l) == "a" and pos(r) == "n")
             wc.update(adjnouns)
         elif args.nounnoun:
             # nounnoun bigram count
-            nounnouns = ("%s__%s" % (l, r) for i, l, r in bigrams(line) if pos(l) == "n" and pos(r) == "n")
+            nounnouns = ("%s__%s" % (l, r) for i, (l, r) in bigrams(line) if pos(l) == "n" and pos(r) == "n")
             wc.update(nounnouns)
         else:
             # regular count
