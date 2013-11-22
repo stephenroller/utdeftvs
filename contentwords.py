@@ -10,7 +10,7 @@ def is_content_word(word_pos):
         return False
     pos = word_pos.split("/")[-1]
     word = "".join(word_pos.split("/")[:-1])
-    if pos[:2] not in GOOD_POS:
+    if '__' in word_pos or pos[:2] not in GOOD_POS:
         return False
     else:
         shortpos = GOOD_POS[pos[:2]]

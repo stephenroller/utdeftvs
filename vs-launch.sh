@@ -10,5 +10,6 @@ hadoop jar $HADOOP_HOME/contrib/streaming/hadoop-streaming-0.20.2-cdh3u2.jar \
     -reducer vs-reduce.py \
     -file vs-map.py \
     -file vs-reduce.py \
+    -file util.py \
     -file contexts.txt
 

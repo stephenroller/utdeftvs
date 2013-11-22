@@ -4,8 +4,9 @@ import logging
 import argparse
 import gc
 from collections import Counter, defaultdict
+from functools import partial
 
-from util import pos, bigram
+from util import pos, bigrams
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -16,7 +17,7 @@ def read_corpus(corpus):
         yield line.rstrip().split(" ")
 
 def load_contexts(file):
-    return set(w.strip() for w in file if w.strip())
+    return set(w.strip().split("\t")[0] for w in file if w.strip())
 
 def make_bow_vectorspace(corpus, contexts):
     logging.info("Size of contexts: %d" % len(contexts))
@@ -48,14 +49,14 @@ def make_bow_vectorspace(corpus, contexts):
             if count > 0:
                 yield target, context, count
 
-def make_adjnoun_bow_vectorspace(corpus, contexts):
+def make_bigram_bow_vectorspace(corpus, contexts, leftpos="a", rightpos="n"):
     space = defaultdict(Counter)
     for sno, sentence in enumerate(read_corpus(corpus), 1):
         sentence_contexts = [(i, w) for i, w in enumerate(sentence) if w in contexts]
         indices = set(i for i, w in sentence_contexts)
         sentence_contexts = Counter(w for i, w in sentence_contexts)
         for t, left, right in bigrams(sentence):
-            if pos(left) == "a" and pos(right) == "n":
+            if pos(left) == leftpos and pos(right) == rightpos:
                 space[(left, right)].update(sentence_contexts)
                 if t in indices:
                     space[(left, right)].subtract([left])
@@ -73,7 +74,7 @@ def make_adjnoun_bow_vectorspace(corpus, contexts):
     for (left, right), values in space.iteritems():
         for context, count in values.iteritems():
             if count > 0:
-                yield "%s %s" % (left, right), context, count
+                yield "%s__%s" % (left, right), context, count
 
 def main():
     parser = argparse.ArgumentParser(
@@ -81,12 +82,15 @@ def main():
     parser.add_argument('--input', '-i', metavar='[FILE|-]', help='Input vector space', type=argparse.FileType('r'), default=sys.stdin)
     parser.add_argument('--contexts', '-c', metavar='FILE', type=argparse.FileType('r'), help='File of contexts (or counts w/ counts)', default='contexts.txt')
     parser.add_argument('--adjnoun', action='store_true', help='Compute vectors for adj-nouns.')
+    parser.add_argument('--nounnoun', action='store_true', help='Compute vectors for noun-nouns.')
     args = parser.parse_args()
 
     # now let's actually make the space
     contexts = load_contexts(args.contexts)
     if args.adjnoun:
-        bow_f = make_adjnoun_bow_vectorspace
+        bow_f = partial(make_bigram_bow_vectorspace, leftpos="a", rightpos="n")
+    elif args.nounnoun:
+        bow_f = partial(make_bigram_bow_vectorspace, leftpos="n", rightpos="n")
     else:
         bow_f = make_bow_vectorspace
 
