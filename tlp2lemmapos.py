@@ -47,13 +47,15 @@ def main():
     for docno, line in enumerate(sys.stdin, 1):
         line = line.strip()
         split = line.split("\t")
-        key = split[0]
+        #key = split[0]
         sentences = split[2:]
         for s in sentences:
             words = s.split(" ")
             tlps = (w.split("|") for w in words)
-            lemmapos = (w[1] + "/" + fix_pos(w[2], w[1]) for w in tlps)
-            print " ".join(lemmapos)
+            #lemmapos = (w[1] + "/" + fix_pos(w[2], w[1]) for w in tlps)
+            wordforms = " ".join(w[0] for w in tlps)
+            print wordforms.strip()
+            #print " ".join(lemmapos)
 
 
 if __name__ == '__main__':

@@ -24,17 +24,19 @@ def sentenceExtractor(lineIterator):
         else:
             buffer.append(dict(zip(_FIELDNAMES, line.split())))
 
-def outputLemmas(tupleIterator, usePos=True):
+def outputLemmas(tupleIterator, usePos=True, useLemmas=True):
+    token_field = useLemmas and 'lemma' or 'word'
     if usePos:
-        return ("%s/%s" % (t['lemma'], t['pos']) for t in tupleIterator)
+        return ("%s/%s" % (t[token_field], t['pos']) for t in tupleIterator)
     else:
-        return (t['lemma'] for t in tupleIterator)
+        return (t[token_field] for t in tupleIterator)
 
 def main():
     parser = argparse.ArgumentParser(
                 description='Extracts sentences or documents from minipar output.')
     parser.add_argument('--input', '-i', metavar='[FILE|-]', help='Input file')
     parser.add_argument('--nopos', '-P', action='store_false', help='Ignore POS tags.')
+    parser.add_argument('--nolemmatize', '-L', action='store_false', help="Don't lemmatize.")
     args = parser.parse_args()
 
     if not args.input or args.input == "-":
@@ -45,7 +47,7 @@ def main():
     lines = sentenceExtractor(args.input)
 
     for lid, line in lines:
-        linestr = " ".join(outputLemmas(line, usePos=args.nopos))
+        linestr = " ".join(outputLemmas(line, usePos=args.nopos, useLemmas=args.nolemmatize))
         #print "%s\t%s" % (lid, linestr)
         print linestr
 

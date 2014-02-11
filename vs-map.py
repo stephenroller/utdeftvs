@@ -64,7 +64,7 @@ def main():
     parser = argparse.ArgumentParser(
                 description='')
     parser.add_argument('--input', '-i', metavar='[FILE|-]', help='Input vector space', type=argparse.FileType('r'), default=sys.stdin)
-    parser.add_argument('--contexts', '-c', metavar='FILE', type=argparse.FileType('r'), help='File of contexts (or counts w/ counts)', default='contexts.txt')
+    parser.add_argument('--contexts', '-c', metavar='FILE', type=argparse.FileType('r'), help='File of contexts (or counts w/ counts)')
     parser.add_argument('--adjnoun', action='store_true', help='Compute vectors for adj-nouns.')
     parser.add_argument('--nounnoun', action='store_true', help='Compute vectors for noun-nouns.')
     parser.add_argument('--window', type=int, default=0, help='Max context window size (0 for whole sentence context)')

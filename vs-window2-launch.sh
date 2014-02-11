@@ -5,11 +5,11 @@ hadoop jar $HADOOP_HOME/contrib/streaming/hadoop-streaming-0.20.2-cdh3u2.jar \
     -D stream.num.map.output.key.fields=2 \
     -D mapred.text.key.partitioner.options=-k1 \
     -input $1 \
-    -output "$1.coocc" \
-    -mapper "vs-map.py --contexts $2"\
+    -output "$1.window2.coocc" \
+    -mapper "vs-map.py --window=2" \
     -reducer vs-reduce.py \
     -file vs-map.py \
     -file vs-reduce.py \
     -file util.py \
-    -file $2
+    -file contexts.txt
 
