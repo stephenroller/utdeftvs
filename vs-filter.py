@@ -14,6 +14,7 @@ def main():
     parser.add_argument('--targets', '-t', metavar='FILE', type=argparse.FileType('r'), help='File of targets (or targets w/ counts)')
     parser.add_argument('--compoundsearch', '-c', metavar='FILE', type=argparse.FileType('r'), help='File of compounds to search for.')
     parser.add_argument('--contexts', '-x', metavar='FILE', type=argparse.FileType('r'), help='File of contexts (or contexts w/ counts)')
+    parser.add_argument('--invertcontexts', '-X', action='store_true', help='Filter contexts NOT in the contexts list.')
     args = parser.parse_args()
 
     targets = None
@@ -48,7 +49,7 @@ def main():
             target_match = True
 
         if contexts:
-            if c in contexts:
+            if (not args.invertcontexts and c in contexts) or (args.invertcontexts and c not in contexts):
                 context_match = True
         else:
             context_match = True

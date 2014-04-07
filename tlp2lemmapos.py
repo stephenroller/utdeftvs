@@ -4,7 +4,7 @@
 Converts from DHG's TLP (Text, Lemma, POS) format into CoNLL format
 for use as input to the MaltParser.
 
-TLP format is one sentence per line,
+TLP format is one document per line,
 
 TEXTID <tab> TYPE <tab> SENTENCE1 <tab> SENTENCE2 <tab> ...
 SENTENCE := WORD1 <space> WORD2 <space> ...
@@ -13,6 +13,8 @@ WORD := TOKEN '|' LEMMA '|' POS
 """
 
 import sys
+import argparse
+import itertools
 
 def fix_pos(pos, lemma):
     direct_fixes = {
@@ -44,18 +46,32 @@ def fix_pos(pos, lemma):
         return pos
 
 def main():
+    parser = argparse.ArgumentParser(
+                description="Extracts text from Dan's TLP format.")
+    parser.add_argument('--input', '-i', metavar='[FILE|-]', type=argparse.FileType('r'), help='Input file', default=sys.stdin)
+    parser.add_argument('--doclines', '-d', action='store_true', help='Output one document per line.')
+    parser.add_argument('--pos', '-p', action='store_true', help='Output with POS tags.')
+    parser.add_argument('--lemmas', '-l', action='store_true', help='Output lemmas instead of surface forms.')
+    args = parser.parse_args()
+
     for docno, line in enumerate(sys.stdin, 1):
         line = line.strip()
         split = line.split("\t")
         #key = split[0]
         sentences = split[2:]
+        if args.doclines:
+            sentences = [" ".join(sentences)]
         for s in sentences:
             words = s.split(" ")
             tlps = (w.split("|") for w in words)
-            #lemmapos = (w[1] + "/" + fix_pos(w[2], w[1]) for w in tlps)
-            wordforms = " ".join(w[0] for w in tlps)
-            print wordforms.strip()
-            #print " ".join(lemmapos)
+            tlps = (w for w in tlps if len(w) == 3)
+            tlps = ((w[0], w[1], fix_pos(w[2], w[1])) for w in tlps)
+            indx = args.lemmas and 1 or 0
+            if args.pos:
+                output = (w[indx] + "/" + w[2] for w in tlps)
+            else:
+                output = (w[indx] for w in tlps)
+            print " ".join(output).strip()
 
 
 if __name__ == '__main__':
