@@ -24,12 +24,19 @@ def sentenceExtractor(lineIterator):
         else:
             buffer.append(dict(zip(_FIELDNAMES, line.split())))
 
-def outputLemmas(tupleIterator, usePos=True, useLemmas=True):
+def outputLemmas(tupleIterator, usePos=True, useLemmas=True, lower=False):
     token_field = useLemmas and 'lemma' or 'word'
-    if usePos:
-        return ("%s/%s" % (t[token_field], t['pos']) for t in tupleIterator)
+    if lower:
+        lower_ = lambda x: x.lower()
     else:
-        return (t[token_field] for t in tupleIterator)
+        lower_ = lambda x: x
+
+    if usePos:
+        retval = ("%s/%s" % (lower_(t[token_field]), t['pos']) for t in tupleIterator)
+    else:
+        retval = (lower_(t[token_field]) for t in tupleIterator)
+
+    return retval
 
 def main():
     parser = argparse.ArgumentParser(
@@ -37,6 +44,7 @@ def main():
     parser.add_argument('--input', '-i', metavar='[FILE|-]', help='Input file')
     parser.add_argument('--nopos', '-P', action='store_false', help='Ignore POS tags.')
     parser.add_argument('--nolemmatize', '-L', action='store_false', help="Don't lemmatize.")
+    parser.add_argument('--forcelower', '-l', action='store_true', help='Force everything to be lowercase.')
     args = parser.parse_args()
 
     if not args.input or args.input == "-":
@@ -47,7 +55,7 @@ def main():
     lines = sentenceExtractor(args.input)
 
     for lid, line in lines:
-        linestr = " ".join(outputLemmas(line, usePos=args.nopos, useLemmas=args.nolemmatize))
+        linestr = " ".join(outputLemmas(line, usePos=args.nopos, useLemmas=args.nolemmatize, lower=args.forcelower))
         #print "%s\t%s" % (lid, linestr)
         print linestr
 
