@@ -38,11 +38,11 @@ def main():
     s12 = np.sqrt(s)
     vectors = u.dot(np.diag(s12))
 
-    np.savez_compressed(args.output, matrix=vectors, vocab=rvocab)
+    np.savez_compressed(args.output, matrix=vectors, rows=rvocab)
 
     if args.contextsoutput:
         contexts = np.diag(s12).dot(vt).T
-        np.savez_compressed(args.contextsoutput, matrix=contexts, vocab=cvocab)
+        np.savez_compressed(args.contextsoutput, matrix=contexts, rows=cvocab)
 
 
 
