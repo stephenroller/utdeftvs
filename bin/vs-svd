@@ -16,8 +16,6 @@ def main():
     parser = argparse.ArgumentParser('Dimensionality reduces a space using the SVD')
     parser.add_argument('--input', '-i', default="-", help='Input file')
     parser.add_argument('--output', '-o', type=argparse.FileType('w'), help='Output file')
-    parser.add_argument('--contextsoutput', '-x', type=argparse.FileType('w'),
-                        help='Output file (contexts matrix)')
     parser.add_argument('-k', type=int, default=300, help='Target dimensionality')
     parser.add_argument('--rows', '-r', type=argparse.FileType('r'), help='Frequency file of rows.')
     parser.add_argument('--cols', '-c', type=argparse.FileType('r'), help='Frequency file of cols.')
@@ -52,15 +50,11 @@ def main():
     sys.stderr.write("Computing the SVD\n")
     u, s, vt = la.svds(spmat, k=args.k)
     s12 = np.sqrt(s)
-    vectors = u.dot(np.diag(s12))
+    vectors = u.dot(np.diag(s12)).astype(np.float32)
+    contexts = np.diag(s12).dot(vt).T.astype(np.float32)
 
     sys.stderr.write("Saving output\n")
-    np.savez_compressed(args.output, matrix=vectors, rows=rvocab)
-
-    if args.contextsoutput:
-        contexts = np.diag(s12).dot(vt).T
-        np.savez_compressed(args.contextsoutput, matrix=contexts, rows=cvocab)
-
+    np.savez_compressed(args.output, matrix=vectors, rows=rvocab, cmatrix=contexts, crows=cvocab)
 
 
 if __name__ == '__main__':
