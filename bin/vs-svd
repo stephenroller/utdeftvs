@@ -19,6 +19,8 @@ def main():
     parser.add_argument('-k', type=int, default=300, help='Target dimensionality')
     parser.add_argument('--rows', '-r', type=argparse.FileType('r'), help='Frequency file of rows.')
     parser.add_argument('--cols', '-c', type=argparse.FileType('r'), help='Frequency file of cols.')
+    parser.add_argument('--singulars', '-s', choices=('u', 'uv', 's'), default='s',
+                        help='How to handle the singular values.')
     args = parser.parse_args()
 
     if args.input == "-":
@@ -49,12 +51,21 @@ def main():
 
     sys.stderr.write("Computing the SVD\n")
     u, s, vt = la.svds(spmat, k=args.k)
-    s12 = np.sqrt(s)
-    vectors = u.dot(np.diag(s12)).astype(np.float32)
-    contexts = np.diag(s12).dot(vt).T.astype(np.float32)
+    if args.singulars == 's':
+        vectors = u.astype(np.float32)
+        contexts = vt.T.astype(np.float32)
+        np.savez_compressed(args.output, matrix=vectors, rows=rvocab, cmatrix=contexts, crows=cvocab, s=s)
+    elif args.singulars == 'u':
+        vectors = u.dot(np.diag(s)).astype(np.float32)
+        contexts = vt.T.astype(np.float32)
+        np.savez_compressed(args.output, matrix=vectors, rows=rvocab, cmatrix=contexts, crows=cvocab)
+    elif args.singulars == 'uv':
+        s12 = np.sqrt(s)
+        vectors = u.dot(np.diag(s12)).astype(np.float32)
+        contexts = np.diag(s12).dot(vt).T.astype(np.float32)
+        np.savez_compressed(args.output, matrix=vectors, rows=rvocab, cmatrix=contexts, crows=cvocab)
 
     sys.stderr.write("Saving output\n")
-    np.savez_compressed(args.output, matrix=vectors, rows=rvocab, cmatrix=contexts, crows=cvocab)
 
 
 if __name__ == '__main__':
