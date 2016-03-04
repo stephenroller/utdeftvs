@@ -5,7 +5,7 @@ import struct
 from sklearn.preprocessing import normalize
 
 class VectorSpace(object):
-    def __init__(self, matrix, vocab, cmatrix=None, cvocab=None):
+    def __init__(self, matrix, vocab, cmatrix=None, cvocab=None, **other):
         self.vocab = vocab
         self.matrix = matrix
         self.lookup = {v:i for i, v in enumerate(vocab)}
@@ -14,6 +14,9 @@ class VectorSpace(object):
         self.cvocab = cvocab
         if cvocab is not None:
             self.clookup = {v:i for i, v in enumerate(cvocab)}
+
+        for key, value in other.iteritems():
+            setattr(self, key, value)
 
     def __getitem__(self, key):
         if isinstance(key, int):
@@ -46,12 +49,15 @@ class VectorSpace(object):
         return VectorSpace(newmatrix, newvocab)
 
     def normalize(self):
+        magn = np.sqrt(np.sum(np.square(self.matrix), axis=1))
         nmat = normalize(self.matrix, norm='l2', axis=1)
         if self.cmatrix is not None:
+            cmagn = np.sqrt(np.sum(np.square(self.cmatrix), axis=1))
             cnmat = normalize(self.cmatrix, norm='l2', axis=1)
         else:
+            cmagn = None
             cnmat = None
-        return VectorSpace(nmat, self.vocab, cnmat, self.cvocab)
+        return VectorSpace(nmat, self.vocab, cnmat, self.cvocab, magn=magn, cmagn=cmagn)
 
     def svd(self, k=0):
         if not k:
@@ -110,18 +116,20 @@ def load_mikolov_text(filename):
 
     return VectorSpace(matrix, vocab)
 
-def load_mikolov_binary(filename):
+def load_mikolov_binary(filename, insertblank=False):
     FLOAT_SIZE = 4
     spacefile = open(filename)
     header = spacefile.readline().rstrip()
     vocab_s, dims = map(int, header.split(" "))
 
     vocab = []
+    if insertblank:
+        vocab.insert(0, '')
 
     # init matrix
-    matrix = np.zeros((vocab_s, dims), dtype=np.float)
+    matrix = np.zeros((vocab_s + int(insertblank), dims), dtype=np.float)
 
-    i = 0
+    i = int(insertblank)
     while True:
         line = spacefile.readline()
         if not line:
